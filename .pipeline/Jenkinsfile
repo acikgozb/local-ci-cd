@@ -1,9 +1,17 @@
 pipeline {
-    agent { docker { image 'docker.io/golang:1.22.3' } }
+    agent {
+        docker 'docker.io/golang:1.22.3'
+        args '-v /home/jenkins/agent/repo:${WORKSPACE}/repo'
+    }
+
+    options {
+        skipDefaultCheckout()
+    }
+
     stages {
-        stage('version-test') {
+        stage('Checkout to repository') {
             steps {
-                go version
+                sh 'ls -lA ${WORKSPACE}/repo'
             }
         }
     }
