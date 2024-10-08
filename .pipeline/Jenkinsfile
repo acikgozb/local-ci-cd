@@ -1,17 +1,23 @@
 pipeline {
     agent {
-        docker 'docker.io/golang:1.22.3'
-        args '-v /home/jenkins/agent/repo:${WORKSPACE}/repo'
+        docker {
+            image 'docker.io/golang:1.22.3'
+            args '-v /home/jenkins/agent/repo:${WORKSPACE}/repo'
+        }
     }
 
     options {
         skipDefaultCheckout()
     }
 
+    triggers {
+        pollSCM('')
+    }
+
     stages {
-        stage('Checkout to repository') {
+        stage('Checkout') {
             steps {
-                sh 'ls -lA ${WORKSPACE}/repo'
+                sh 'if [ ! -d ${WORKSPACE}/repo ]; then exit 1; else echo "Checkout successful."; fi'
             }
         }
     }
