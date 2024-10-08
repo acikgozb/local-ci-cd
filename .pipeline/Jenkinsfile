@@ -1,0 +1,10 @@
+pipeline {
+    agent { docker { image 'docker.io/golang:1.22.3' } }
+    stages {
+        stage('version-test') {
+            steps {
+                go version
+            }
+        }
+    }
+}

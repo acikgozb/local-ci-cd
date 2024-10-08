@@ -1,0 +1,36 @@
+FROM docker.io/docker:27-dind-rootless
+
+# Install Java and SSH for Jenkins Agent.
+USER root
+RUN apk add openjdk17-jre-headless openssh
+
+# Generate SSH host keys.
+RUN ssh-keygen -A
+# Disable SSH PasswordAuthentication
+RUN sed -i -e 's/#PasswordAuthentication[[:blank:]]yes/#PasswordAuthentication no/g' /etc/ssh/sshd_config
+
+# Create a new user 'jenkins' for our Jenkins controller and agent.
+ARG USER="jenkins"
+RUN adduser -h /home/${USER} -s /bin/sh -D ${USER} ${USER}
+# Unlock the user by setting wildcard (aka. hash).
+RUN echo "${USER}:*" | chpasswd
+# Add user 'jenkins' to group 'docker' to enable Docker commands in agent w/o sudo.
+RUN addgroup ${USER} docker
+# Populate subuid and subgid for user 'jenkins'.
+RUN echo "${USER}:165536:65536" >> /etc/subuid; echo "${USER}:165536:65536" >> /etc/subuid
+
+USER jenkins
+# Create required directories for Jenkins agent
+RUN mkdir /home/${USER}/agent 
+# Create required .ssh directory with a strict 700 permission.
+RUN mkdir -m 700 /home/${USER}/.ssh
+
+# Copy the public key to .ssh/authorized_keys, to allow our Jenkins controller to connect via SSH.
+# PS: The private key is saved to the Controller as a credential.
+COPY .pipeline/local/jenkins-agent/jenkins-agent.pub /home/${USER}/.ssh/authorized_keys
+
+COPY .pipeline/local/jenkins-agent/agent-entrypoint /home/${USER}
+
+USER root
+EXPOSE 22
+ENTRYPOINT [ "/home/jenkins/agent-entrypoint" ]
