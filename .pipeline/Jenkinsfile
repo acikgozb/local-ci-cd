@@ -20,5 +20,14 @@ pipeline {
                 sh 'if [ ! -d ${WORKSPACE}/repo ]; then exit 1; else echo "Checkout successful."; fi'
             }
         }
+
+        stage('CI') {
+            steps {
+                dir('repo/src') {
+                    sh 'go version'
+                    // sh 'go run main.go'
+                }
+            }
+        }
     }
 }
